@@ -8,10 +8,12 @@ pipeline {
 
     environment {
         SONAR_SCANNER_HOME = tool 'SonarQubeScanner'
+        DOCKER_CREDS = credentials('ilyes-dockerhubTK')
+        IMAGE_BACKEND = "ilyes_5arctic7_backend" 
+        IMAGE_FRONTEND = "ilyes_5arctic7_frontend"
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -24,6 +26,19 @@ pipeline {
             steps {
                 dir('backend') {
                     sh 'mvn compile'
+                }
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                dir('backend') {
+                    sh 'mvn test'
+                }
+            }
+            post {
+                always {
+                    junit 'backend/target/surefire-reports/*.xml'
                 }
             }
         }
@@ -46,19 +61,6 @@ pipeline {
             }
         }
 
-        stage('Unit Tests') {
-            steps {
-                dir('backend') {
-                    sh 'mvn test'
-                }
-            }
-            post {
-                always {
-                    junit 'backend/target/surefire-reports/*.xml'
-                }
-            }
-        }
-
         stage('Package') {
             steps {
                 dir('backend') {
@@ -66,9 +68,34 @@ pipeline {
                 }
             }
         }
+
+        
+        stage('Build Docker Images') {
+            steps {
+                sh "docker build -t ${DOCKER_CREDS_USR}/${IMAGE_BACKEND}:latest ./backend"
+                sh "docker build -t ${DOCKER_CREDS_USR}/${IMAGE_FRONTEND}:latest ./frontend"
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                sh 'echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin'
+                sh "docker push ${DOCKER_CREDS_USR}/${IMAGE_BACKEND}:latest"
+                sh "docker push ${DOCKER_CREDS_USR}/${IMAGE_FRONTEND}:latest"
+            }
+        }
+
+        stage('Deploy (Docker Compose)') {
+            steps {
+                sh 'docker compose up -d'
+            }
+        }
     }
 
     post {
+        always {
+            sh 'docker logout'
+        }
         success {
             archiveArtifacts artifacts: 'backend/target/*.jar', fingerprint: true
             echo 'Pipeline completed successfully ✅'
