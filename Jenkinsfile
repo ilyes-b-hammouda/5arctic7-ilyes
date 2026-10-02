@@ -79,9 +79,11 @@ pipeline {
 
         stage('Push to Docker Hub') {
             steps {
-                sh 'echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin'
-                sh "docker push ${DOCKER_CREDS_USR}/${IMAGE_BACKEND}:latest"
-                sh "docker push ${DOCKER_CREDS_USR}/${IMAGE_FRONTEND}:latest"
+                retry(3) {
+                    sh 'echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin'
+                    sh "docker push ${DOCKER_CREDS_USR}/${IMAGE_BACKEND}:latest"
+                    sh "docker push ${DOCKER_CREDS_USR}/${IMAGE_FRONTEND}:latest"
+                }
             }
         }
 
