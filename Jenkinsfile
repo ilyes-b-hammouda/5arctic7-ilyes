@@ -34,11 +34,21 @@ pipeline {
             steps {
                 dir('backend') {
                       sh '''
-                        docker run -d --name mysql-test -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=testdb -p 3306:3306 mysql:8
-                        sleep 15
+                        docker rm -f mysql-test || true
+
+                        docker run -d --name mysql-test \
+                            -e MYSQL_ROOT_PASSWORD=root \
+                            -e MYSQL_DATABASE=testdb \
+                            -p 3306:3306 mysql:8
+
+                        echo "Waiting for MySQL to start..."
+                        until docker exec mysql-test mysqladmin ping -h localhost -u root --password=root --silent; do
+                            sleep 2
+                        done
+                        echo "MySQL is ready!"
+
                         mvn test
-                        docker rm -f mysql-test
-                      '''
+                    '''
                   }
             }
             post {
