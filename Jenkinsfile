@@ -33,8 +33,13 @@ pipeline {
         stage('Unit Tests') {
             steps {
                 dir('backend') {
-                    sh 'mvn test'
-                }
+                      sh '''
+                        docker run -d --name mysql-test -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=testdb -p 3306:3306 mysql:8
+                        sleep 15
+                        mvn test
+                        docker rm -f mysql-test
+                      '''
+                  }
             }
             post {
                 always {
