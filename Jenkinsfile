@@ -11,6 +11,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -19,10 +20,10 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Compile') {
             steps {
                 dir('backend') {
-                    sh 'mvn clean install'
+                    sh 'mvn compile'
                 }
             }
         }
@@ -39,8 +40,29 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 10, unit: 'MINUTES') {
+                timeout(time: , unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                dir('backend') {
+                    sh 'mvn test'
+                }
+            }
+            post {
+                always {
+                    junit 'backend/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                dir('backend') {
+                    sh 'mvn package -DskipTests'
                 }
             }
         }
@@ -48,6 +70,7 @@ pipeline {
 
     post {
         success {
+            archiveArtifacts artifacts: 'backend/target/*.jar', fingerprint: true
             echo 'Pipeline completed successfully ✅'
         }
         failure {
