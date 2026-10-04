@@ -55,7 +55,15 @@ pipeline {
                 always {
                     junit 'backend/target/surefire-reports/*.xml'
                     sh 'docker rm -f mysql-test || true'
-                }
+
+                    publishHTML(target: [
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'backend/target/site/jacoco',
+                        reportFiles: 'index.html',
+                        reportName: 'JaCoCo Coverage Report'
+                ])
             }
         }
 
