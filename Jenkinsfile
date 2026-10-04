@@ -63,7 +63,8 @@ pipeline {
                         reportDir: 'backend/target/site/jacoco',
                         reportFiles: 'index.html',
                         reportName: 'JaCoCo Coverage Report'
-                ])
+                    ])
+                }
             }
         }
 
@@ -93,7 +94,6 @@ pipeline {
             }
         }
 
-        
         stage('Build Docker Images') {
             steps {
                 sh "docker build -t ${DOCKER_CREDS_USR}/${IMAGE_BACKEND}:latest ./backend"
