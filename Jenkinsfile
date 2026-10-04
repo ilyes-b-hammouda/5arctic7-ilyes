@@ -33,7 +33,7 @@ pipeline {
         stage('Unit Tests') {
             steps {
                 dir('backend') {
-                      sh '''
+                    sh '''
                         docker rm -f mysql-test || true
 
                         docker run -d --name mysql-test \
@@ -49,11 +49,12 @@ pipeline {
 
                         mvn test
                     '''
-                  }
+                }
             }
             post {
                 always {
                     junit 'backend/target/surefire-reports/*.xml'
+                    sh 'docker rm -f mysql-test || true'
                 }
             }
         }
