@@ -41,7 +41,6 @@ class EquipeRepositoryTest {
     @Test
     @DisplayName("Should retrieve equipes by assigned entreprise ID")
     void shouldFindEquipesByEntrepriseId() {
-        // Given
         Entreprise entreprise = Entreprise.builder()
                 .nom("Tech Corp")
                 .adresse("Tunis")
