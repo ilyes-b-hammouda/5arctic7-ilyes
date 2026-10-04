@@ -9,7 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import tn.esprit.backend.entity.Entreprise;
-import tn.esprit.backend.service.EntrepriseService;
+import tn.esprit.backend.service.IEntrepriseService;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.verify;
 class EntrepriseControllerTest {
 
     @Mock
-    private EntrepriseService entrepriseService;
+    private IEntrepriseService entrepriseService;
 
     @InjectMocks
     private EntrepriseController entrepriseController;
