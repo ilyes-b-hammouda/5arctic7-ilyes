@@ -1,4 +1,4 @@
-package tn.esprit.backend.service.impl;
+package tn.esprit.backend.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +13,7 @@ import tn.esprit.backend.entity.Projet;
 import tn.esprit.backend.repository.EntrepriseRepository;
 import tn.esprit.backend.repository.EquipeRepository;
 import tn.esprit.backend.repository.ProjetRepository;
+import tn.esprit.backend.service.impl.EquipeServiceImpl;
 
 import java.util.ArrayList;
 import java.util.Optional;
