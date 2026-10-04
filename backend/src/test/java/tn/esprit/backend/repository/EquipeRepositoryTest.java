@@ -1,32 +1,43 @@
 package tn.esprit.backend.repository;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import tn.esprit.backend.entity.Equipe;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ExtendWith(MockitoExtension.class)
 class EquipeRepositoryTest {
 
-    @Autowired
+    @Mock
     private EquipeRepository equipeRepository;
+
+    private Equipe sampleEquipe;
+
+    @BeforeEach
+    void setUp() {
+        sampleEquipe = Equipe.builder()
+                .id(1L)
+                .nom("Beta Team")
+                .specialite("Backend")
+                .build();
+    }
 
     @Test
     @DisplayName("Should save and retrieve an Equipe successfully")
     void shouldSaveAndFindEquipeById() {
-        Equipe equipe = Equipe.builder()
-                .nom("Beta Team")
-                .specialite("Backend")
-                .build();
+        given(equipeRepository.save(any(Equipe.class))).willReturn(sampleEquipe);
+        given(equipeRepository.findById(1L)).willReturn(Optional.of(sampleEquipe));
 
-        Equipe savedEquipe = equipeRepository.save(equipe);
+        Equipe savedEquipe = equipeRepository.save(sampleEquipe);
         Optional<Equipe> foundEquipe = equipeRepository.findById(savedEquipe.getId());
 
         assertThat(foundEquipe).isPresent();

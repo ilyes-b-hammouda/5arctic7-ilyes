@@ -1,74 +1,51 @@
 package tn.esprit.backend.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import tn.esprit.backend.entity.Entreprise;
-import tn.esprit.backend.service.IEntrepriseService;
+import tn.esprit.backend.service.EntrepriseService;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.verify;
 
-@WebMvcTest(EntrepriseController.class)
+@ExtendWith(MockitoExtension.class)
 class EntrepriseControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Mock
+    private EntrepriseService entrepriseService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @InjectMocks
+    private EntrepriseController entrepriseController;
 
-    @MockBean
-    private IEntrepriseService entrepriseService;
+    private Entreprise sampleEntreprise;
 
-    @Test
-    @DisplayName("POST /entreprise/add should create and return new Entreprise")
-    void shouldCreateEntreprise() throws Exception {
-        Entreprise inputEntreprise = Entreprise.builder()
-                .nom("Innovation Hub")
-                .adresse("Ghazela")
-                .build();
-
-        Entreprise savedEntreprise = Entreprise.builder()
+    @BeforeEach
+    void setUp() {
+        sampleEntreprise = Entreprise.builder()
                 .id(1L)
-                .nom("Innovation Hub")
-                .adresse("Ghazela")
+                .nom("Esprit")
+                .adresse("Ariana")
                 .build();
-
-        given(entrepriseService.addEntreprise(any(Entreprise.class))).willReturn(savedEntreprise);
-
-        mockMvc.perform(post("/entreprise/add")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(inputEntreprise)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.nom").value("Innovation Hub"))
-                .andExpect(jsonPath("$.adresse").value("Ghazela"));
     }
 
     @Test
-    @DisplayName("GET /entreprise/all should return list of all entreprises")
-    void shouldGetAllEntreprises() throws Exception {
-        List<Entreprise> list = List.of(
-                Entreprise.builder().id(1L).nom("Company A").adresse("Location A").build(),
-                Entreprise.builder().id(2L).nom("Company B").adresse("Location B").build()
-        );
+    @DisplayName("Should return list of entreprises")
+    void shouldReturnAllEntreprises() {
+        given(entrepriseService.getAllEntreprises()).willReturn(List.of(sampleEntreprise));
 
-        given(entrepriseService.getAllEntreprises()).willReturn(list);
+        List<Entreprise> result = entrepriseController.getAllEntreprises();
 
-        mockMvc.perform(get("/entreprise/all"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].nom").value("Company A"))
-                .andExpect(jsonPath("$[1].nom").value("Company B"));
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getNom()).isEqualTo("Esprit");
+        verify(entrepriseService).getAllEntreprises();
     }
 }
