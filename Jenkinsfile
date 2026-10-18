@@ -41,7 +41,7 @@ pipeline {
                         docker run -d --name mysql-test \
                             -e MYSQL_ROOT_PASSWORD=root \
                             -e MYSQL_DATABASE=testdb \
-                            -p mysql:8
+                            -p 3306:3306 mysql:8
 
                         echo "Waiting for MySQL to start..."
                         until docker exec mysql-test mysqladmin ping -h localhost -u root --password=root --silent; do
