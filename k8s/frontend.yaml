@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: DOCKER_USER/ilyes_5arctic7_frontend:IMAGE_TAG
+          image: ilyesbh0/ilyes_5arctic7_frontend:latest
           ports:
             - containerPort: 80
 ---

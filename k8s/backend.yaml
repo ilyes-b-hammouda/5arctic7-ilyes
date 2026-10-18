@@ -15,9 +15,9 @@ spec:
     spec:
       containers:
         - name: backend
-          image: DOCKER_USER/ilyes_5arctic7_backend:IMAGE_TAG
+          image: ilyesbh0/ilyes_5arctic7_backend:latest
           ports:
-            - containerPort: 8080
+            - containerPort: 8089
           env:
             - name: SPRING_DATASOURCE_URL
               value: jdbc:mysql://mysql:3306/appdb
@@ -30,7 +30,7 @@ spec:
                   key: MYSQL_ROOT_PASSWORD
           readinessProbe:
             tcpSocket:
-              port: 8080
+              port: 8089
             initialDelaySeconds: 30
             periodSeconds: 10
 ---
@@ -43,5 +43,5 @@ spec:
   selector:
     app: backend
   ports:
-    - port: 8080
-      targetPort: 8080
+    - port: 8089
+      targetPort: 8089
