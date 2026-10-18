@@ -9,8 +9,10 @@ pipeline {
     environment {
         SONAR_SCANNER_HOME = tool 'SonarQubeScanner'
         DOCKER_CREDS = credentials('ilyes-dockerhubTK')
-        IMAGE_BACKEND = "ilyes_5arctic7_backend" 
+        IMAGE_BACKEND = "ilyes_5arctic7_backend"
         IMAGE_FRONTEND = "ilyes_5arctic7_frontend"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        K8S_NAMESPACE = "devops-app"
     }
 
     stages {
@@ -96,8 +98,8 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                sh "docker build -t ${DOCKER_CREDS_USR}/${IMAGE_BACKEND}:latest ./backend"
-                sh "docker build -t ${DOCKER_CREDS_USR}/${IMAGE_FRONTEND}:latest ./frontend"
+                sh "docker build -t ${DOCKER_CREDS_USR}/${IMAGE_BACKEND}:${IMAGE_TAG} -t ${DOCKER_CREDS_USR}/${IMAGE_BACKEND}:latest ./backend"
+                sh "docker build -t ${DOCKER_CREDS_USR}/${IMAGE_FRONTEND}:${IMAGE_TAG} -t ${DOCKER_CREDS_USR}/${IMAGE_FRONTEND}:latest ./frontend"
             }
         }
 
@@ -105,15 +107,47 @@ pipeline {
             steps {
                 retry(3) {
                     sh 'echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin'
+                    sh "docker push ${DOCKER_CREDS_USR}/${IMAGE_BACKEND}:${IMAGE_TAG}"
                     sh "docker push ${DOCKER_CREDS_USR}/${IMAGE_BACKEND}:latest"
+                    sh "docker push ${DOCKER_CREDS_USR}/${IMAGE_FRONTEND}:${IMAGE_TAG}"
                     sh "docker push ${DOCKER_CREDS_USR}/${IMAGE_FRONTEND}:latest"
                 }
             }
         }
 
-        stage('Deploy (Docker Compose)') {
+        stage('Deploy to Kubernetes') {
             steps {
-                sh 'docker compose up -d'
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    script {
+                        try {
+                            sh '''
+                                kubectl version --client
+                                kubectl get nodes
+
+                                # Inject the Docker Hub user and build tag into the manifests
+                                sed -i "s|DOCKER_USER|${DOCKER_CREDS_USR}|g; s|IMAGE_TAG|${IMAGE_TAG}|g" k8s/backend.yaml k8s/frontend.yaml
+
+                                kubectl apply -f k8s/namespace.yaml
+                                kubectl apply -f k8s/mysql.yaml
+                                kubectl apply -f k8s/backend.yaml
+                                kubectl apply -f k8s/frontend.yaml
+
+                                kubectl rollout status deployment/mysql    -n ${K8S_NAMESPACE} --timeout=180s
+                                kubectl rollout status deployment/backend  -n ${K8S_NAMESPACE} --timeout=240s
+                                kubectl rollout status deployment/frontend -n ${K8S_NAMESPACE} --timeout=180s
+
+                                kubectl get pods,svc -n ${K8S_NAMESPACE}
+                            '''
+                        } catch (err) {
+                            sh '''
+                                kubectl get pods -n ${K8S_NAMESPACE} || true
+                                kubectl rollout undo deployment/backend  -n ${K8S_NAMESPACE} || true
+                                kubectl rollout undo deployment/frontend -n ${K8S_NAMESPACE} || true
+                            '''
+                            throw err
+                        }
+                    }
+                }
             }
         }
     }
