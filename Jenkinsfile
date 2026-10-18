@@ -81,12 +81,27 @@ pipeline {
         }
 
         stage('Quality Gate') {
-            steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                    steps {
+                        script {
+                            echo "Checking SonarQube Quality Gate status..."
+                            // Give SonarQube a few seconds to finish processing the task
+                            sleep 10
+                            
+                            def qgStatus = sh(
+                                script: "curl -s 'http://192.168.33.10:9000/api/qualitygates/project_status?projectKey=tn.esprit:backend' | grep -o '\"status\":\"[^\"]*\"' | head -1 | cut -d'\"' -f4",
+                                returnStdout: true
+                            ).trim()
+                            
+                            echo "SonarQube Quality Gate Status: ${qgStatus}"
+                            
+                            if (qgStatus != "OK") {
+                                error("Pipeline aborted: Quality Gate failed with status: ${qgStatus}")
+                            } else {
+                                echo "Quality Gate Passed Successfully ✅"
+                            }
+                        }
+                    }
                 }
-            }
-        }
 
         stage('Package') {
             steps {
